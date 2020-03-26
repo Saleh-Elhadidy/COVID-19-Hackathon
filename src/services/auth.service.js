@@ -85,3 +85,29 @@ module.exports.signJWT = (user, expiresIn) =>
       },
     );
   });
+
+  module.exports.signJWTHospital = (hospital, expiresIn) =>
+  new Promise((resolve, reject) => {
+    console.log(expiresIn)
+    console.log(typeof (expiresIn))
+    if (!expiresIn) {
+      expiresIn = '1d'
+    } else {
+      expiresIn = '7d'
+    }
+    jwt.sign(
+      {
+        hospital: hospital.toObject(),
+      },
+      SECRET,
+      {
+        expiresIn,
+      },
+      (err, token) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve(token);
+      },
+    );
+  });
