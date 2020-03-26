@@ -19,3 +19,4 @@ router.post('/auth/login', isNotAuthenticated, errorHandler(authCtrl.login));
 router.post('/hospital/create', isAuthenticated, errorHandler(hospCtrl.createHospital));
 router.get('/hospital/getHospitals', isAuthenticated, errorHandler(hospCtrl.getHospitals));
 
+module.exports = router;
