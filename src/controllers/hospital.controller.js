@@ -253,3 +253,63 @@ else
   }
 }
 };
+
+module.exports.findHospitalByGov = async (req,res) =>{
+  const schema = joi
+  .object({
+    governorate: joi
+        .string()
+        .trim()
+        .required(),
+  })
+  .options({
+    stripUnknown: true,
+  });
+const { error, value: body } = schema.validate(req.body);
+if (error) {
+  return res.status(UNPROCESSABLE_ENTITY).json({
+    msg: error.details[0].message,
+  });
+}
+else
+{
+  if(req.decodedToken.user.userLevel === 1)
+  {
+    let hospitals = await findHospital({governorate: new RegExp('^'+body.governorate+'$', "i")});
+    if(hospitals)
+    {
+      if(Array.isArray(hospitals))
+      {
+        hospitals.forEach(hospital => {
+          hospital.password = null
+          hospital.username = null
+          hospital.email = null
+        });
+        return res.status(OK).json({
+          msg: `Sorted by governorate!.`,
+          data:hospitals,
+        });
+      }
+      else
+      {
+
+        hospitals.password = null
+        hospitals.username = null
+        hospitals.email = null
+        return res.status(OK).json({
+          msg: `Sorted by governorate!.`,
+          data:hospitals,
+        });
+      }
+    }
+    else
+    {
+      return res.status(UNPROCESSABLE_ENTITY).json({msg:"Error retrieving hospitals!"})
+    }
+  }
+  else
+  {
+    return res.status(UNAUTHORIZED).json({msg:"Un-authorized action!"})
+  }
+}
+};
