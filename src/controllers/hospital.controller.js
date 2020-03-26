@@ -167,16 +167,16 @@ module.exports.loginHospital = async (req,res) =>{
     if(passCheck)
     {
       let data2 = await signJWTHospital(hospital,true);
-      return res.status(OK).json({msg:"Login Successfull",data:data2});
+      return res.status(OK).json({msg:"Login Successfull",token:data2});
     }
     else
     {
-      return res.status(UNAUTHORIZED).json({msg:"Wrong data entered!",data:data});
+      return res.status(UNAUTHORIZED).json({msg:"Wrong data entered!"});
     }
   }
   else
   {
-    return res.status(UNAUTHORIZED).json({msg:"Wrong data entered!",data:data});
+    return res.status(UNAUTHORIZED).json({msg:"Wrong data entered!"});
   }
 
 };
