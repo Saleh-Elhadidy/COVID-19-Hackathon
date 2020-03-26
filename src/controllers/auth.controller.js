@@ -36,6 +36,10 @@ module.exports.register = async (req, res) => {
         .string()
         .trim()
         .required(),
+      username: joi
+        .string()
+        .trim()
+        .required(),
     })
     .options({
       stripUnknown: true,
