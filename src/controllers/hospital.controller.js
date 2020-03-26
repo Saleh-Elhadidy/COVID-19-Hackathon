@@ -117,15 +117,28 @@ module.exports.getHospitals = async (req, res) => {
         }
         else
         {
-          hospitals.forEach(hospital => {
-            hospital.password = null
-            hospital.username = null
-            hospital.email = null
-          });
-          return res.status(OK).json({
-              msg: `Hospital Created successfully.`,
+          if(Array.isArray(hospitals))
+          {
+            hospitals.forEach(hospital => {
+              hospital.password = null
+              hospital.username = null
+              hospital.email = null
+            });
+            return res.status(OK).json({
+              msg: `Sorted by district!.`,
               data:hospitals,
             });
+          }
+          else
+          {
+            hospitals.password = null
+            hospitals.username = null
+            hospitals.email = null
+            return res.status(OK).json({
+              msg: `Sorted by district!.`,
+              data:hospitals,
+            });
+          }
         }
   }
   else
@@ -179,4 +192,64 @@ module.exports.loginHospital = async (req,res) =>{
     return res.status(UNAUTHORIZED).json({msg:"Wrong data entered!"});
   }
 
+};
+
+module.exports.findHospitalByDistrict = async (req,res) =>{
+  const schema = joi
+  .object({
+    district: joi
+        .string()
+        .trim()
+        .required(),
+  })
+  .options({
+    stripUnknown: true,
+  });
+const { error, value: body } = schema.validate(req.body);
+if (error) {
+  return res.status(UNPROCESSABLE_ENTITY).json({
+    msg: error.details[0].message,
+  });
+}
+else
+{
+  if(req.decodedToken.user.userLevel === 1)
+  {
+    let hospitals = await findHospital({district: new RegExp('^'+body.district+'$', "i")});
+    if(hospitals)
+    {
+      if(Array.isArray(hospitals))
+      {
+        hospitals.forEach(hospital => {
+          hospital.password = null
+          hospital.username = null
+          hospital.email = null
+        });
+        return res.status(OK).json({
+          msg: `Sorted by district!.`,
+          data:hospitals,
+        });
+      }
+      else
+      {
+
+        hospitals.password = null
+        hospitals.username = null
+        hospitals.email = null
+        return res.status(OK).json({
+          msg: `Sorted by district!.`,
+          data:hospitals,
+        });
+      }
+    }
+    else
+    {
+      return res.status(UNPROCESSABLE_ENTITY).json({msg:"Error retrieving hospitals!"})
+    }
+  }
+  else
+  {
+    return res.status(UNAUTHORIZED).json({msg:"Un-authorized action!"})
+  }
+}
 };

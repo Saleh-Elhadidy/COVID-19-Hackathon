@@ -15,10 +15,12 @@ router.post(
   errorHandler(authCtrl.register),
 );
 router.post('/auth/login', isNotAuthenticated, errorHandler(authCtrl.login));
-// --------------------------------------------------------------------------------
+// -------------------------------Hospital-------------------------------------------------
 router.post('/hospital/create', isAuthenticated, errorHandler(hospCtrl.createHospital));
 router.get('/hospital/getHospitals', isAuthenticated, errorHandler(hospCtrl.getHospitals));
 router.post('/hospital/loginHospital', isNotAuthenticated , errorHandler(hospCtrl.loginHospital));
+router.get('/hospital/findByDistrict', isAuthenticated , errorHandler(hospCtrl.findHospitalByDistrict));
+
 
 
 module.exports = router;
