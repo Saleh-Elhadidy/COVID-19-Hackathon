@@ -50,33 +50,42 @@ module.exports.register = async (req, res) => {
       msg: error.details[0].message,
     });
   }
-  let user = await findUser({
-    $or: [
-      {
-        username: body.username
-      },
-    ],
-  });
-  if (user) {
-    return res.status(CONFLICT).json({
-      msg: 'Username or Email or Phone already taken, please choose another.',
+  let currUserId = req.decodedToken.user._id;
+  let currUser = await findUserById(currUserId);
+  if(currUser && currUser.userLevel === 1){
+    let user = await findUser({
+      $or: [
+        {
+          username: body.username
+        },
+      ],
     });
-  }
-  Object.assign(
-    body,
-    { password: await encryptPassword(body.password),
-      email: body.email},
-  );
-  user = await createUser(body);
-  if(user){
-    return res.status(CREATED).json({
-        msg: `Welcome, ${user.username}, your registration was successful.`,
+    if (user) {
+      return res.status(CONFLICT).json({
+        msg: 'Username or Email or Phone already taken, please choose another.',
       });
+    }
+    Object.assign(
+      body,
+      { password: await encryptPassword(body.password),
+        email: body.email},
+    );
+    user = await createUser(body);
+    if(user){
+      return res.status(CREATED).json({
+          msg: `Welcome, ${user.username}, your registration was successful.`,
+        });
+    }
+    else
+    {
+      return res.status(UNAUTHORIZED).json({ msg: 'Wrong data enterd.' });
+    }
   }
   else
   {
     return res.status(UNAUTHORIZED).json({ msg: 'Wrong data enterd.' });
   }
+  
 
 };
 
