@@ -22,7 +22,9 @@ const {
   checkForCorrectPassword,
   signJWT,
   encryptPassword,
+  findHospitalById
 } = require('../services/auth.service');
+const Hospital = require('../models/hospital.model');
 
 module.exports.createHospital = async (req, res) => {
     const schema = joi
@@ -127,3 +129,40 @@ module.exports.createHospital = async (req, res) => {
         return res.status(UNAUTHORIZED).json({msg:'Wrong Un-Authorized action .'})
     }
   };
+
+  /**
+ * Update an hospital
+ */
+module.exports.update = async (req, res) => {
+  if(req.params.hospitalId == req.decodedToken.user._id){
+    Hospital.findById(req.params.hospitalId).exec(function (err, hospital) {
+      if (err) {
+          return res.status(UNPROCESSABLE_ENTITY).send({
+              msg: 'Error Occured'
+              });
+      } else if (!hospital) {
+          return res.status(404).send({
+          msg: 'No Hospital with that identifier has been found'
+          });
+      }else{
+      //req.hospital = hospital;    
+      var hospital = req.hospital;
+      hospital.save(function (err) {
+        if (err) {
+            return res.status(UNPROCESSABLE_ENTITY).json({
+              msg: err.details[0].message,
+            });
+          }else{
+            return res.status(OK).json({
+              msg: 'hospital edited successfully',
+              data: hospital,
+            });
+          }
+      });
+
+  }
+  });
+  }
+
+
+};
