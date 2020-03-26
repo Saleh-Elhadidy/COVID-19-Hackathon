@@ -11,7 +11,6 @@ const https = require('https');
 //   cert: cert
 // };
 const app = require('./app');
-const io = require('./config/socket.io');
 const {
   connectToMongoDB,
   disconnectFromMongoDB,
@@ -90,7 +89,6 @@ const bootstrapServer = async () => {
   server.listen(port);
   server.on('error', onError);
   server.on('listening', onListening);
-  io.attach(server, { pingTimeout: 60000 });
 };
 
 const closeServer = async () => {
