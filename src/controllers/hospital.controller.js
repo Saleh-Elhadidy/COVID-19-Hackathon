@@ -205,61 +205,68 @@ module.exports.loginHospital = async (req,res) =>{
  * Update an hospital
  */
 module.exports.updateHospital = async (req, res) => {
-
-  if(req.params.hospitalId == req.decodedToken.user._id){
-    const schema = joi
-    .object({
-      freeVentilators: joi
-        .string()
-        .trim()
-        .lowercase()
-        .required(),
-      freeICU: joi
-        .string()
-        .trim()
-        .required(),
-    })
-    .options({ stripUnknown: true });
-  
-    const { error, value: body } = schema.validate(req.body);
-    if (error) {
-      console.log(error.details[0].message);
-      return res.status(UNPROCESSABLE_ENTITY).json({
-        msg: error.details[0].message,
-      });
-    }
-
-    Hospital.findById(req.params.hospitalId).exec(function (err, hospital) {
-      if (err) {
-          return res.status(UNPROCESSABLE_ENTITY).send({
-              msg: 'Error Occured'
-              });
-      } else if (!hospital) {
-          return res.status(404).send({
-          msg: 'No Hospital with that identifier has been found'
-          });
+  if(req.decodedToken.hospital!=null && req.decodedToken.hospital!=undefined )
+  {
+    if(req.params.hospitalId == req.decodedToken.hospital._id){
+      const schema = joi
+      .object({
+        freeVentilators: joi
+          .string()
+          .trim()
+          .lowercase()
+          .required(),
+        freeICU: joi
+          .string()
+          .trim()
+          .required(),
+      })
+      .options({ stripUnknown: true });
+    
+      const { error, value: body } = schema.validate(req.body);
+      if (error) {
+        console.log(error.details[0].message);
+        return res.status(UNPROCESSABLE_ENTITY).json({
+          msg: error.details[0].message,
+        });
       }
-      else{
-      hospital.freeVentilators =  body.freeVentilators
-      hospital.freeICU=  body.freeICU
-
-      hospital.save(function (err) {
+  
+      Hospital.findById(req.params.hospitalId).exec(function (err, hospital) {
         if (err) {
-            return res.status(UNPROCESSABLE_ENTITY).json({
-              msg: err.details[0].message,
+            return res.status(UNPROCESSABLE_ENTITY).send({
+                msg: 'Error Occured'
+                });
+        } else if (!hospital) {
+            return res.status(404).send({
+            msg: 'No Hospital with that identifier has been found'
             });
-          }else{
-            return res.status(OK).json({
-              msg: 'hospital edited successfully',
-              data: hospital,
-            });
-          }
-      });
-
+        }
+        else{
+        hospital.freeVentilators =  body.freeVentilators
+        hospital.freeICU=  body.freeICU
+  
+        hospital.save(function (err) {
+          if (err) {
+              return res.status(UNPROCESSABLE_ENTITY).json({
+                msg: err,
+              });
+            }else{
+              return res.status(OK).json({
+                msg: 'hospital edited successfully',
+                data: hospital,
+              });
+            }
+        });
+  
+    }
+    });
+    }
   }
-  });
-  }
-
+else
+{
+  return res.status(404).send({
+    msg: 'No Hospital with that identifier has been found'
+    });
+}
 };
 
 module.exports.findHospitalByDistrict = async (req,res) =>{
