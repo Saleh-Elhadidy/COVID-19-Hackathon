@@ -27,9 +27,9 @@ const hospitalSchema = new mongoose.Schema(
         trim: true,
     },
     phoneNumber:{
-        type: Number,
+        type: String,
         required: false,
-        default: 0,
+        default: "",
     },
     district:{
         type: String,
@@ -50,6 +50,7 @@ const hospitalSchema = new mongoose.Schema(
         type: String,
         required: true,
         trim: true,
+        default:"Egypt"
     },
     freeICU:{
         type: Number,
