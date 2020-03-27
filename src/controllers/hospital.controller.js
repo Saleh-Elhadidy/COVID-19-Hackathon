@@ -88,6 +88,9 @@ module.exports.createHospital = async (req, res) => {
             {
                 hospitalName: body.hospitalName
             },
+            {
+                email: body.email
+            },
           ],
         });
         if (hospital) {
