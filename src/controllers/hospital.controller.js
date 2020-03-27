@@ -200,12 +200,12 @@ module.exports.loginHospital = async (req,res) =>{
       return res.status(UNAUTHORIZED).json({msg:"Wrong data entered!"});
     }
   };
-
+}
   /**
  * Update an hospital
  */
 module.exports.updateHospital = async (req, res) => {
-  console.log("dakhl")
+
   if(req.params.hospitalId == req.decodedToken.user._id){
     const schema = joi
     .object({
@@ -259,10 +259,6 @@ module.exports.updateHospital = async (req, res) => {
   }
   });
   }
-<<<<<<< HEAD
-};
-}
-=======
 
 };
 
@@ -385,4 +381,4 @@ else
   }
 }
 };
->>>>>>> a78609421a2e1c29b1ab9420ff8ed55c5de4ee23
+
