@@ -15,7 +15,9 @@ findUserById
 } = require('../services/user.service');
 const {
   findHospital,
+  findHospitals,
   createHospital,
+  findHospitalsSorted,
   findAllHospitals
 } = require('../services/hospital.service');
 const {
@@ -64,8 +66,12 @@ module.exports.createHospital = async (req, res) => {
           .trim()
           .required(),
       phoneNumber: joi
-          .number()
+          .string()
           .required(),
+      totalsBeds: joi
+          .number()
+          .required()
+          .min(0),
     })
     .options({
       stripUnknown: true,
@@ -187,7 +193,7 @@ module.exports.loginHospital = async (req,res) =>{
       msg: error.details[0].message,
     });
   }
-  let hospital = await findHospital({
+  let hospital = await findHospitals({
     username:body.username
   },false);
   if(hospital)
@@ -217,14 +223,17 @@ module.exports.updateHospital = async (req, res) => {
       const schema = joi
       .object({
         freeVentilators: joi
-          .string()
-          .trim()
-          .lowercase()
-          .required(),
+          .number()
+          .required()
+          .min(0),
         freeICU: joi
-          .string()
-          .trim()
-          .required(),
+          .number()
+          .required()
+          .min(0),
+        freeBeds: joi
+          .number()
+          .required()
+          .min(0),
       })
       .options({ stripUnknown: true });
     
@@ -249,7 +258,7 @@ module.exports.updateHospital = async (req, res) => {
         else{
         hospital.freeVentilators =  body.freeVentilators
         hospital.freeICU=  body.freeICU
-  
+        hospital.freeBeds =  body.freeBeds  
         hospital.save(function (err) {
           if (err) {
               return res.status(UNPROCESSABLE_ENTITY).json({
@@ -296,7 +305,7 @@ else
 {
   if(req.decodedToken.user.userLevel === 1)
   {
-    let hospitals = await findHospital({district: new RegExp('^'+body.district+'$', "i")});
+    let hospitals = await findHospitals({district: new RegExp('^'+body.district+'$', "i")});
     if(hospitals)
     {
       if(Array.isArray(hospitals))
@@ -356,7 +365,7 @@ else
 {
   if(req.decodedToken.user.userLevel === 1)
   {
-    let hospitals = await findHospital({governorate: new RegExp('^'+body.governorate+'$', "i")});
+    let hospitals = await findHospitals({governorate: new RegExp('^'+body.governorate+'$', "i")});
     if(hospitals)
     {
       if(Array.isArray(hospitals))
@@ -379,6 +388,138 @@ else
         hospitals.email = null
         return res.status(OK).json({
           msg: `Sorted by governorate!.`,
+          data:hospitals,
+        });
+      }
+    }
+    else
+    {
+      return res.status(UNPROCESSABLE_ENTITY).json({msg:"Error retrieving hospitals!"})
+    }
+  }
+  else
+  {
+    return res.status(UNAUTHORIZED).json({msg:"Un-authorized action!"})
+  }
+}
+};
+
+module.exports.findHospitalByCity = async (req,res) =>{
+  const schema = joi
+  .object({
+    city: joi
+        .string()
+        .trim()
+        .required(),
+  })
+  .options({
+    stripUnknown: true,
+  });
+const { error, value: body } = schema.validate(req.body);
+if (error) {
+  return res.status(UNPROCESSABLE_ENTITY).json({
+    msg: error.details[0].message,
+  });
+}
+else
+{
+  if(req.decodedToken.user.userLevel === 1)
+  {
+    let hospitals = await findHospitals({city: new RegExp('^'+body.city+'$', "i")});
+    if(hospitals)
+    {
+      if(Array.isArray(hospitals))
+      {
+        hospitals.forEach(hospital => {
+          hospital.password = null
+          hospital.username = null
+          hospital.email = null
+        });
+        return res.status(OK).json({
+          msg: `Sorted by city!.`,
+          data:hospitals,
+        });
+      }
+      else
+      {
+
+        hospitals.password = null
+        hospitals.username = null
+        hospitals.email = null
+        return res.status(OK).json({
+          msg: `Sorted by city!.`,
+          data:hospitals,
+        });
+      }
+    }
+    else
+    {
+      return res.status(UNPROCESSABLE_ENTITY).json({msg:"Error retrieving hospitals!"})
+    }
+  }
+  else
+  {
+    return res.status(UNAUTHORIZED).json({msg:"Un-authorized action!"})
+  }
+}
+};
+module.exports.sortHospitals = async (req,res) =>{
+  const schema = joi
+  .object({
+    sortMethod: joi
+        .string()
+        .trim()
+        .required(),
+  })
+  .options({
+    stripUnknown: true,
+  });
+const { error, value: body } = schema.validate(req.body);
+if (error) {
+  return res.status(UNPROCESSABLE_ENTITY).json({
+    msg: error.details[0].message,
+  });
+}
+else
+{
+  if(req.decodedToken.user.userLevel === 1)
+  {
+    var sortParams;
+    if(body.sortMethod.toLowerCase() === 'icu')
+    {
+      sortParams = { freeICU : 'asc'};
+    }
+    if(body.sortMethod.toLowerCase() === 'vent')
+    {
+      sortParams = { freeVentilators : 'asc'};
+    }
+    if(body.sortMethod.toLowerCase() === 'beds')
+    {
+      sortParams = { freeBeds : 'asc'};
+    }
+    let hospitals = await findHospitalsSorted({},sortParams);
+    if(hospitals)
+    {
+      if(Array.isArray(hospitals))
+      {
+        hospitals.forEach(hospital => {
+          hospital.password = null
+          hospital.username = null
+          hospital.email = null
+        });
+        return res.status(OK).json({
+          msg: `Sorted By Param.`,
+          data:hospitals,
+        });
+      }
+      else
+      {
+
+        hospitals.password = null
+        hospitals.username = null
+        hospitals.email = null
+        return res.status(OK).json({
+          msg: `Sorted By Param.`,
           data:hospitals,
         });
       }

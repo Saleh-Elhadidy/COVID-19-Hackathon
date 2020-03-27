@@ -22,7 +22,7 @@ router.post('/hospital/loginHospital', isNotAuthenticated , errorHandler(hospCtr
 router.patch('/hospital/updateHospital/:hospitalId', isAuthenticated , errorHandler(hospCtrl.updateHospital));
 router.get('/hospital/findByDistrict', isAuthenticated , errorHandler(hospCtrl.findHospitalByDistrict));
 router.get('/hospital/findByGov', isAuthenticated , errorHandler(hospCtrl.findHospitalByGov));
-
-
+router.get('/hospital/findByCity', isAuthenticated , errorHandler(hospCtrl.findHospitalByCity));
+router.get('/hospital/sortHospitals', isAuthenticated , errorHandler(hospCtrl.sortHospitals));
 
 module.exports = router;

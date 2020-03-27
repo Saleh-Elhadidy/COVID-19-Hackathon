@@ -28,3 +28,8 @@ module.exports.findHospitalAndRemove = ({ query, lean = true }) =>
 Hospital.findOneAndDelete(query)
     .lean(lean)
     .exec();
+
+module.exports.findHospitalsSorted = (query,sortParams, lean = true) =>
+Hospital.find(query).sort(sortParams)
+          .lean(lean)
+          .exec();
