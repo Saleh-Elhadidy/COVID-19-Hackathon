@@ -18,6 +18,7 @@ const {
   findHospitals,
   createHospital,
   findHospitalsSorted,
+  findHospitalAndRemove,
   findAllHospitals
 } = require('../services/hospital.service');
 const {
@@ -68,7 +69,7 @@ module.exports.createHospital = async (req, res) => {
       phoneNumber: joi
           .string()
           .required(),
-      totalsBeds: joi
+      totalBeds: joi
           .number()
           .required()
           .min(0),
@@ -193,7 +194,7 @@ module.exports.loginHospital = async (req,res) =>{
       msg: error.details[0].message,
     });
   }
-  let hospital = await findHospitals({
+  let hospital = await findHospital({
     username:body.username
   },false);
   if(hospital)
@@ -534,5 +535,21 @@ else
     return res.status(UNAUTHORIZED).json({msg:"Un-authorized action!"})
   }
 }
+};
+
+module.exports.deleteHospital = async (req,res) =>{
+  if(req.decodedToken.user.userLevel === 1 && req.params.hospitalId)
+  {
+
+    await findHospitalAndRemove({_id:req.params.hospitalId});
+    return res.status(OK).json({msg:"Hospital Deleted succuessfully!"})
+
+    
+  }
+  else
+  {
+    return res.status(UNAUTHORIZED).json({msg:"Un-authorized action!"})
+  }
+
 };
 

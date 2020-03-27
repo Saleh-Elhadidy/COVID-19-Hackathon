@@ -29,7 +29,12 @@ Hospital.findOneAndDelete(query)
     .lean(lean)
     .exec();
 
-module.exports.findHospitalsSorted = (query,sortParams, lean = true) =>
+module.exports.findHospitalsSorted = ({query,sortParams, lean = true}) =>
 Hospital.find(query).sort(sortParams)
           .lean(lean)
           .exec();
+
+module.exports.findHospitalByIdAndDelete = ({query,lean = true}) => 
+    Hospital.findOneAndRemove(query).lean(true).exec();
+
+
