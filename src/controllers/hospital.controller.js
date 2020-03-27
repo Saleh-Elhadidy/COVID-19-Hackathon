@@ -21,6 +21,9 @@ const {
   findHospitalAndRemove,
   findAllHospitals,
   findHospitalById,
+  findUpdates,
+  createUpdate,
+  findAllUpdates,
 } = require('../services/hospital.service');
 const {
 checkForCorrectPassword,
@@ -209,7 +212,12 @@ module.exports.loginHospital = async (req,res) =>{
     {
       return res.status(UNAUTHORIZED).json({msg:"Wrong data entered!"});
     }
-  };
+  }
+  else
+  {
+    return res.status(UNAUTHORIZED).json({msg:"User not found!"});
+
+  }
 }
   /**
  * Update an hospital
@@ -235,6 +243,10 @@ module.exports.updateHospital = async (req, res) => {
           .number()
           .required()
           .min(0),
+        covidPatients: joi
+          .number()
+          .required()
+          .min(0),
       })
       .options({ stripUnknown: true });
     
@@ -257,24 +269,62 @@ module.exports.updateHospital = async (req, res) => {
             });
         }
         else{
-        hospital.freeVentilators =  body.freeVentilators
-        hospital.freeICU=  body.freeICU
-        hospital.freeBeds =  body.freeBeds  
-        hospital.save(function (err) {
+        hospital.freeVentilators =  body.freeVentilators;
+        hospital.freeICU =  body.freeICU;
+        hospital.freeBeds =  body.freeBeds;
+        hospital.covidPatients = body.covidPatients;
+        hospital.save(async function (err) {
           if (err) {
               return res.status(UNPROCESSABLE_ENTITY).json({
                 msg: err,
               });
             }else{
-              return res.status(OK).json({
-                msg: 'hospital edited successfully',
-                data: hospital,
-              });
+              let update = 
+              {
+                hospitalName: hospital.hospitalName,
+                hospitalId: hospital._id,
+                freeVentilators: body.freeVentilators,
+                freeICU: body.freeICU,
+                freeBeds: body.freeBeds,
+                covidPatients: body.covidPatients
+              }
+              let duplicate = await findUpdates({ hospitalId:hospital._id , createdAt:  { $gt: new Date(Date.now() - 6*60*60 * 1000) }  })
+              if(duplicate)
+              {
+                return res.status(OK).json({
+                  msg: 'hospital edited only successfully',
+                  data: hospital,
+                });
+              }
+              else
+              {
+                let createdUpdate = await createUpdate(update);
+                if(createdUpdate)
+                {
+                  return res.status(OK).json({
+                    msg: 'hospital edited AND UPDATED successfully',
+                    data: hospital,
+                  });
+                }
+                else
+                {
+                  return res.status(OK).json({
+                    msg: 'hospital edited but failed to update',
+                  });
+                }
+              }
+
             }
         });
   
     }
     });
+    }
+    else
+    {
+      return res.status(UNAUTHORIZED).send({
+        msg: 'Un-Authorized error'
+        });
     }
   }
 else
@@ -498,6 +548,10 @@ else
     {
       sortParams = { freeBeds : 'asc'};
     }
+    if(body.sortMethod.toLowerCase() === 'covid')
+    {
+      sortParams = { covidPatients : 'desc'};
+    }
     let hospitals = await findHospitalsSorted({},sortParams);
     if(hospitals)
     {
@@ -553,6 +607,25 @@ module.exports.deleteHospital = async (req,res) =>{
     }
 
     
+  }
+  else
+  {
+    return res.status(UNAUTHORIZED).json({msg:"Un-authorized action!"})
+  }
+
+};
+module.exports.getUpdates = async (req,res) =>{
+  if(req.decodedToken.user.userLevel === 1)
+  {
+    let updates = await findAllUpdates();
+    if(updates)
+    {
+      return res.status(OK).json({msg:"Found updates!",data:updates})
+    }
+    else
+    {
+      return res.status(UNPROCESSABLE_ENTITY).json({msg:"Error finding updates!"})
+    }
   }
   else
   {
