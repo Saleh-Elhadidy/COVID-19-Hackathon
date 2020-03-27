@@ -19,10 +19,10 @@ const {
   createHospital,
   findHospitalsSorted,
   findHospitalAndRemove,
-  findAllHospitals
+  findAllHospitals,
+  findHospitalById,
 } = require('../services/hospital.service');
 const {
-findHospitalById,
 checkForCorrectPassword,
 signJWT,
 signJWTHospital,
@@ -540,9 +540,17 @@ else
 module.exports.deleteHospital = async (req,res) =>{
   if(req.decodedToken.user.userLevel === 1 && req.params.hospitalId)
   {
-
-    await findHospitalAndRemove({_id:req.params.hospitalId});
-    return res.status(OK).json({msg:"Hospital Deleted succuessfully!"})
+    let hospital = await findHospitalById(req.params.hospitalId);
+    let deleted = await hospital.remove();
+    console.log(deleted);
+    if(deleted)
+    {
+      return res.status(OK).json({msg:"Deleted!"})
+    }
+    else
+    {
+      return res.status(UNPROCESSABLE_ENTITY).json({msg:"Error deleting hospital!"})
+    }
 
     
   }
