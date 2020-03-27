@@ -209,8 +209,11 @@ module.exports.loginHospital = async (req,res) =>{
  */
 module.exports.updateHospital = async (req, res) => {
   if(req.decodedToken.hospital!=null && req.decodedToken.hospital!=undefined )
-  {
+  {      console.log("here")
+    console.log(req.decodedToken.hospital._id)
     if(req.params.hospitalId == req.decodedToken.hospital._id){
+      console.log("here")
+
       const schema = joi
       .object({
         freeVentilators: joi
@@ -232,7 +235,7 @@ module.exports.updateHospital = async (req, res) => {
           msg: error.details[0].message,
         });
       }
-  
+      console.log("here")
       Hospital.findById(req.params.hospitalId).exec(function (err, hospital) {
         if (err) {
             return res.status(UNPROCESSABLE_ENTITY).send({
