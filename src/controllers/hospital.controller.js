@@ -51,9 +51,20 @@ module.exports.createHospital = async (req, res) => {
           .string()
           .trim()
           .required(),
+      city: joi
+          .string()
+          .trim()
+          .required(),
       governorate: joi
           .string()
           .trim()
+          .required(),
+      country: joi
+          .string()
+          .trim()
+          .required(),
+      phoneNumber: joi
+          .number()
           .required(),
     })
     .options({
@@ -180,8 +191,31 @@ module.exports.loginHospital = async (req,res) =>{
   /**
  * Update an hospital
  */
-module.exports.update = async (req, res) => {
-  //if(req.params.hospitalId == req.decodedToken.user._id){
+module.exports.updateHospital = async (req, res) => {
+  console.log("dakhl")
+  if(req.params.hospitalId == req.decodedToken.user._id){
+    const schema = joi
+    .object({
+      freeVentilators: joi
+        .string()
+        .trim()
+        .lowercase()
+        .required(),
+      freeICU: joi
+        .string()
+        .trim()
+        .required(),
+    })
+    .options({ stripUnknown: true });
+  
+    const { error, value: body } = schema.validate(req.body);
+    if (error) {
+      console.log(error.details[0].message);
+      return res.status(UNPROCESSABLE_ENTITY).json({
+        msg: error.details[0].message,
+      });
+    }
+
     Hospital.findById(req.params.hospitalId).exec(function (err, hospital) {
       if (err) {
           return res.status(UNPROCESSABLE_ENTITY).send({
@@ -193,8 +227,9 @@ module.exports.update = async (req, res) => {
           });
       }
       else{
-      //req.hospital = hospital;    
-      var hospital = req.hospital;
+      hospital.freeVentilators =  body.freeVentilators
+      hospital.freeICU=  body.freeICU
+
       hospital.save(function (err) {
         if (err) {
             return res.status(UNPROCESSABLE_ENTITY).json({
@@ -210,6 +245,6 @@ module.exports.update = async (req, res) => {
 
   }
   });
-  //}
+  }
 };
 }

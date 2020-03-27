@@ -26,12 +26,27 @@ const hospitalSchema = new mongoose.Schema(
         required: true,
         trim: true,
     },
+    phoneNumber:{
+        type: Number,
+        required: false,
+        default: 0,
+    },
     district:{
         type: String,
         required: true,
         trim: true,
     },
+    city:{
+        type: String,
+        required: true,
+        trim: true,
+    },
     governorate:{
+        type: String,
+        required: true,
+        trim: true,
+    },
+    country:{
         type: String,
         required: true,
         trim: true,
