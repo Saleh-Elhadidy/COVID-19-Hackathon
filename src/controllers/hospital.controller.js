@@ -25,6 +25,11 @@ const {
   createUpdate,
   findAllUpdates,
 } = require('../services/hospital.service');
+const{
+createRequest,
+findAllRequests,
+findRequestById
+} = require('../services/request.service');
 const {
 checkForCorrectPassword,
 signJWT,
@@ -32,6 +37,7 @@ signJWTHospital,
 encryptPassword,
 } = require('../services/auth.service');
 const Hospital = require('../models/hospital.model');
+const Request = require('../models/request.model');
 
 module.exports.createHospital = async (req, res) => {
   const schema = joi
@@ -219,9 +225,7 @@ module.exports.loginHospital = async (req,res) =>{
 
   }
 }
-  /**
- * Update an hospital
- */
+
 module.exports.insertUpdates = async (req, res) => {
   if(req.decodedToken.hospital!=null && req.decodedToken.hospital!=undefined )
   {    
@@ -254,7 +258,6 @@ module.exports.insertUpdates = async (req, res) => {
           msg: error.details[0].message,
         });
       }
-      console.log("here")
       Hospital.findById(req.params.hospitalId).exec(function (err, hospital) {
         if (err) {
             return res.status(UNPROCESSABLE_ENTITY).send({
@@ -332,13 +335,39 @@ else
 }
 };
 module.exports.requestSupplies = async (req, res) => {
-  console.log("here")
-
   if(req.decodedToken.hospital!=null && req.decodedToken.hospital!=undefined )
-  {    
-    if(req.params.hospitalId == req.decodedToken.hospital._id){
-
-      Hospital.findById(req.params.hospitalId).exec(function (err, hospital) {
+    {      
+  
+      if(req.params.hospitalId == req.decodedToken.hospital._id){
+        const schema = joi
+        .object({
+          need: joi
+            .string()
+            .required()
+            .trim(),
+            quantity: joi
+            .number()
+            .required()
+            .min(0),
+            available: joi
+            .number()
+            .required()
+            .min(0),
+            priority: joi
+            .number()
+            .required()
+            .min(0),
+        })
+        .options({ stripUnknown: true });
+      
+        const { error, value: body } = schema.validate(req.body);
+        if (error) {
+          console.log(error.details[0].message);
+          return res.status(UNPROCESSABLE_ENTITY).json({
+            msg: error.details[0].message,
+          });
+        }
+        Hospital.findById(req.params.hospitalId).exec(function (err, hospital) {
         if (err) {
             return res.status(UNPROCESSABLE_ENTITY).send({
                 msg: 'Error Occured'
@@ -349,35 +378,452 @@ module.exports.requestSupplies = async (req, res) => {
             });
         }
         else{
-          if(hospital.needSupplies==true){
-            hospital.needSupplies=false
-          }else
-            hospital.needSupplies=true;
-  
-        hospital.save(function (err) {
-          if (err) {
-              return res.status(UNPROCESSABLE_ENTITY).json({
-                msg: err,
-              });
-            }else{
-              return res.status(OK).json({
-                msg: 'hospital edited successfully',
-                data: hospital,
-              });
-            }
-        });
-  
+          hospital.password=null;
+          hospital.username=null;
+          hospital.email=null;
+           
+           let request = {need: body.need, quantity:body.quantity, available:body.available, hospital:hospital,handled:body.handled, hospitalName:hospital.hospitalName}
+                let createdRequest =  createRequest(request);
+                if(createdRequest)
+                {
+                  return res.status(OK).json({
+                    msg: 'request created successfully',
+                    data: request,
+                  });
+                }
+                else
+                {
+                  return res.status(OK).json({
+                    msg: 'failed to create request',
+                  });
+                }
+        }
+      })
+
+      }
     }
-    });
-    }
+
+
+}
+
+module.exports.getAllRequests = async (req, res) => {
+
+  let currUserId = req.decodedToken.user._id;
+  let currUser = await findUserById(currUserId);
+  if(currUser && currUser.userLevel === 1){
+      let requests = await findAllRequests();
+        if (!requests) {
+          return res.status(UNPROCESSABLE_ENTITY).json({
+            msg: 'Error finding requests',
+          });
+        }
+            return res.status(OK).json({
+              msg: `all requests are retrieved`,
+              data:requests,
+            });
+          
   }
-else
-{
-  return res.status(404).send({
-    msg: 'No Hospital with that identifier has been found'
+  else
+  {
+      return res.status(UNAUTHORIZED).json({msg:'Wrong Un-Authorized action .'})
+  }
+}
+
+module.exports.handleRequest = async (req, res) => {
+  const schema = joi
+  .object({
+    handled: joi
+      .boolean()
+      .required()
+  })
+  .options({ stripUnknown: true });
+  const { error, value: body } = schema.validate(req.body);
+  if (error) {
+    console.log(error.details[0].message);
+    return res.status(UNPROCESSABLE_ENTITY).json({
+      msg: error.details[0].message,
+    });
+  }
+
+  let currUserId = req.decodedToken.user._id;
+  let currUser = await findUserById(currUserId);
+  if(currUser && currUser.userLevel === 1){
+
+          
+        Request.findById(req.params.requestlId).exec(function (err, request) {
+          if (err) {
+              return res.status(UNPROCESSABLE_ENTITY).send({
+                  msg: 'Error Occured'
+                  });
+          } else if (!request) {
+              return res.status(404).send({
+              msg: 'No requests with that identifier has been found'
+              });
+          }
+          else{
+           
+            request.handled =body.handled;
+            
+            request.save(async function (err) {
+              if (err) {
+                  return res.status(UNPROCESSABLE_ENTITY).json({
+                    msg: err,
+                  });
+                }else{
+              return res.status(OK).json({
+                msg: 'requests is handled by government manager',
+                data: request,
+              });
+            
+          }
+          })
+          }
+        })
+  }
+  else
+  {
+      return res.status(UNAUTHORIZED).json({msg:'Wrong Un-Authorized action .'})
+  }
+}
+
+
+module.exports.getHospitalRequests = async(req,res) => {
+let managerialuser = false
+let hospitalUser = false
+  if(req.decodedToken.user!=null && req.decodedToken.user!=undefined )
+    {
+   
+    managerialuser =true
+  }
+  if(req.decodedToken.hospital!=null && req.decodedToken.hospital!=undefined )
+  {
+    hospitalUser =true
+  }
+  
+if(hospitalUser){
+    if(( req.params.hospitalId == req.decodedToken.hospital._id)) {
+
+
+      Request.find({hospital:req.params.hospitalId}).exec(function (err, requests) {
+      if (err) {
+          return res.status(UNPROCESSABLE_ENTITY).send({
+              msg: 'Error Occured'
+              });
+      } else if (!requests) {
+          return res.status(404).send({
+          msg: 'No requests with that identifier has been found'
+          });
+      }
+      else{
+          return res.status(OK).json({
+            msg: 'requests retrieved successfully',
+            data: requests,
+          });
+        
+      }
+      })
+
+    }
+    else
+    {
+      return res.status(UNAUTHORIZED).send({
+        msg: 'Un-Authorized error'
+        });
+    }
+}
+else if(managerialuser){
+  let currUserId = req.decodedToken.user._id;
+  let currUser = await findUserById(currUserId);
+  if(currUser && currUser.userLevel === 1){
+    Request.find({hospital:req.params.hospitalId}).exec(function (err, requests) {
+      if (err) {
+          return res.status(UNPROCESSABLE_ENTITY).send({
+              msg: 'Error Occured'
+              });
+      } else if (!requests) {
+          return res.status(404).send({
+          msg: 'No requests with that identifier has been found'
+          });
+      }
+      else{
+          return res.status(OK).json({
+            msg: 'requests retrieved successfully',
+            data: requests,
+          });
+        
+      }
+      })
+  }
+  else
+  {
+    return res.status(UNAUTHORIZED).send({
+      msg: 'Un-Authorized error'
+      });
+  }
+}
+else{
+  return res.status(UNAUTHORIZED).send({
+    msg: 'Un-Authorized user'
     });
 }
-};
+}
+module.exports.updateRequest= async(req,res) =>{
+  let managerialuser = false
+  let hospitalUser = false
+    if(req.decodedToken.user!=null && req.decodedToken.user!=undefined )
+      {
+     
+      managerialuser =true
+    }
+    if(req.decodedToken.hospital!=null && req.decodedToken.hospital!=undefined )
+    {
+      hospitalUser =true
+    }
+    if(hospitalUser){
+      if(( req.params.hospitalId == req.decodedToken.hospital._id)) {
+        const schema = joi
+        .object({
+          need: joi
+            .string()
+            .trim(),
+            quantity: joi
+            .number()
+            .min(0),
+            available: joi
+            .number()
+            .min(0),
+            priority: joi
+            .number()
+            .min(0),
+        })
+        .options({ stripUnknown: true });
+      
+        const { error, value: body } = schema.validate(req.body);
+        if (error) {
+          console.log(error.details[0].message);
+          return res.status(UNPROCESSABLE_ENTITY).json({
+            msg: error.details[0].message,
+          });
+        }
+        
+        let update = {need:body.need, quantity:body.quantity,available:body.available, priority:body.priority}
+        Request.findById(req.params.requestlId).exec(function (err, request) {
+        if (err) {
+            return res.status(UNPROCESSABLE_ENTITY).send({
+                msg: 'Error Occured'
+                });
+        } else if (!request) {
+            return res.status(404).send({
+            msg: 'No requests with that identifier has been found'
+            });
+        }
+        else{
+          if(body.need!=null){
+            request.need = body.need
+          }
+          if(body.quantity!=null){
+            request.quantity = body.quantity
+          }
+          if(body.available!=null){
+            request.available = body.available
+          }
+          if(body.priority!=null){
+            request.priority = body.priority
+          }
+          request.save(async function (err) {
+            if (err) {
+                return res.status(UNPROCESSABLE_ENTITY).json({
+                  msg: err,
+                });
+              }else{
+            return res.status(OK).json({
+              msg: 'requests updated successfully',
+              data: request,
+            });
+          
+        }
+        })
+      }
+    })
+  }
+  else
+  {
+    return res.status(UNAUTHORIZED).send({
+      msg: 'Un-Authorized error'
+      });
+  }
+    }
+    else if(managerialuser){
+      let currUserId = req.decodedToken.user._id;
+      let currUser = await findUserById(currUserId);
+      if(currUser && currUser.userLevel === 1){
+        const schema = joi
+        .object({
+          need: joi
+            .string()
+            .trim(),
+            quantity: joi
+            .number()
+            .min(0),
+            available: joi
+            .number()
+            .min(0),
+            priority: joi
+            .number()
+            .min(0),
+        })
+        .options({ stripUnknown: true });
+      
+        const { error, value: body } = schema.validate(req.body);
+        if (error) {
+          console.log(error.details[0].message);
+          return res.status(UNPROCESSABLE_ENTITY).json({
+            msg: error.details[0].message,
+          });
+        }
+        
+        let update = {need:body.need, quantity:body.quantity,available:body.available, priority:body.priority}
+        Request.findById(req.params.requestlId).exec(function (err, request) {
+        if (err) {
+            return res.status(UNPROCESSABLE_ENTITY).send({
+                msg: 'Error Occured'
+                });
+        } else if (!request) {
+            return res.status(404).send({
+            msg: 'No requests with that identifier has been found'
+            });
+        }
+        else{
+          if(body.need!=null){
+            request.need = body.need
+          }
+          if(body.quantity!=null){
+            request.quantity = body.quantity
+          }
+          if(body.available!=null){
+            request.available = body.available
+          }
+          if(body.priority!=null){
+            request.priority = body.priority
+          }
+          request.save(async function (err) {
+            if (err) {
+                return res.status(UNPROCESSABLE_ENTITY).json({
+                  msg: err,
+                });
+              }else{
+            return res.status(OK).json({
+              msg: 'requests updated successfully',
+              data: request,
+            });
+          
+        }
+        })
+      }
+    })
+  }
+  else
+  {
+    return res.status(UNAUTHORIZED).send({
+      msg: 'Un-Authorized error'
+      });
+  }
+    }
+    else{ return res.status(UNAUTHORIZED).send({
+      msg: 'Un-Authorized user'
+      });}
+
+}
+module.exports.deleteRequest= async(req,res) =>{
+    
+  let managerialuser = false
+  let hospitalUser = false
+    if(req.decodedToken.user!=null && req.decodedToken.user!=undefined )
+      {
+     
+      managerialuser =true
+    }
+    if(req.decodedToken.hospital!=null && req.decodedToken.hospital!=undefined )
+    {
+      hospitalUser =true
+    }
+
+    if(hospitalUser){
+      if( req.params.hospitalId == req.decodedToken.hospital._id) {
+
+        Request.findById(req.params.requestlId).exec(function (err, request) {
+          if (err) {
+              return res.status(UNPROCESSABLE_ENTITY).send({
+                  msg: 'Error Occured'
+                  });
+          } else if (!request) {
+              return res.status(404).send({
+              msg: 'No requests with that identifier has been found'
+              });
+          }
+          else{
+            let deleted =  request.remove();
+            console.log(deleted);
+            if(deleted)
+            {
+              return res.status(OK).json({msg:"request Deleted by hospital moderator!"})
+            }
+            else
+            {
+              return res.status(UNPROCESSABLE_ENTITY).json({msg:"Error deleting hospital!"})
+            }
+          }
+        })
+
+      }
+      else{
+        return res.status(UNAUTHORIZED).send({
+          msg: 'Un-Authorized error'
+          });
+      }
+    }
+    else if(managerialuser){
+      let currUserId = req.decodedToken.user._id;
+      let currUser = await findUserById(currUserId);
+      if(currUser && currUser.userLevel === 1){
+
+        Request.findById(req.params.requestlId).exec(function (err, request) {
+          if (err) {
+              return res.status(UNPROCESSABLE_ENTITY).send({
+                  msg: 'Error Occured'
+                  });
+          } else if (!request) {
+              return res.status(404).send({
+              msg: 'No requests with that identifier has been found'
+              });
+          }
+          else{
+            let deleted =  request.remove();
+            console.log(deleted);
+            if(deleted)
+            {
+              return res.status(OK).json({msg:"request Deleted by manager moderator!"})
+            }
+            else
+            {
+              return res.status(UNPROCESSABLE_ENTITY).json({msg:"Error deleting hospital!"})
+            }
+          }
+        })
+      }
+      else{
+        return res.status(UNAUTHORIZED).send({
+          msg: 'Un-Authorized error'
+          });
+      }
+    }
+    else{
+      return res.status(UNAUTHORIZED).send({
+        msg: 'Un-Authorized error'
+        });
+    }
+
+}
 module.exports.findHospitalByDistrict = async (req,res) =>{
   const schema = joi
   .object({
@@ -675,4 +1121,6 @@ module.exports.getUpdates = async (req,res) =>{
   }
 
 };
+
+
 

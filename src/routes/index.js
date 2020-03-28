@@ -20,7 +20,7 @@ router.post('/hospital/create', isAuthenticated, errorHandler(hospCtrl.createHos
 router.get('/hospital/getHospitals', isAuthenticated, errorHandler(hospCtrl.getHospitals));
 router.post('/hospital/loginHospital', isNotAuthenticated , errorHandler(hospCtrl.loginHospital));
 router.patch('/hospital/insertUpdates/:hospitalId', isAuthenticated , errorHandler(hospCtrl.insertUpdates));
-router.patch('/hospital/requestSupplies/:hospitalId', isAuthenticated , errorHandler(hospCtrl.requestSupplies));
+router.post('/hospital/requestSupplies/:hospitalId', isAuthenticated , errorHandler(hospCtrl.requestSupplies));
 
 router.get('/hospital/findByDistrict', isAuthenticated , errorHandler(hospCtrl.findHospitalByDistrict));
 router.get('/hospital/findByGov', isAuthenticated , errorHandler(hospCtrl.findHospitalByGov));
@@ -28,5 +28,11 @@ router.get('/hospital/findByCity', isAuthenticated , errorHandler(hospCtrl.findH
 router.get('/hospital/sortHospitals', isAuthenticated , errorHandler(hospCtrl.sortHospitals));
 router.patch('/hospital/deleteHospital/:hospitalId', isAuthenticated , errorHandler(hospCtrl.deleteHospital));
 router.get('/hospital/getUpdates', isAuthenticated , errorHandler(hospCtrl.getUpdates));
+router.get('/hospital/getAllRequests', isAuthenticated , errorHandler(hospCtrl.getAllRequests));
+router.get('/hospital/getHospitalRequests/:hospitalId', isAuthenticated , errorHandler(hospCtrl.getHospitalRequests));
+router.patch('/hospital/updateRequest/:hospitalId/:requestlId', isAuthenticated , errorHandler(hospCtrl.updateRequest));
+router.delete('/hospital/deleteRequest/:hospitalId/:requestlId', isAuthenticated , errorHandler(hospCtrl.deleteRequest))
+
+router.patch('/hospital/handleRequest/:requestlId', isAuthenticated , errorHandler(hospCtrl.handleRequest))
 
 module.exports = router;
