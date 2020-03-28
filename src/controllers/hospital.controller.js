@@ -207,13 +207,10 @@ module.exports.loginHospital = async (req,res) =>{
   /**
  * Update an hospital
  */
-module.exports.updateHospital = async (req, res) => {
+module.exports.insertUpdates = async (req, res) => {
   if(req.decodedToken.hospital!=null && req.decodedToken.hospital!=undefined )
-  {      console.log("here")
-    console.log(req.decodedToken.hospital._id)
+  {    
     if(req.params.hospitalId == req.decodedToken.hospital._id){
-      console.log("here")
-
       const schema = joi
       .object({
         freeVentilators: joi
@@ -274,7 +271,53 @@ else
     });
 }
 };
+module.exports.requestSupplies = async (req, res) => {
+  console.log("here")
 
+  if(req.decodedToken.hospital!=null && req.decodedToken.hospital!=undefined )
+  {    
+    if(req.params.hospitalId == req.decodedToken.hospital._id){
+
+      Hospital.findById(req.params.hospitalId).exec(function (err, hospital) {
+        if (err) {
+            return res.status(UNPROCESSABLE_ENTITY).send({
+                msg: 'Error Occured'
+                });
+        } else if (!hospital) {
+            return res.status(404).send({
+            msg: 'No Hospital with that identifier has been found'
+            });
+        }
+        else{
+          if(hospital.needSupplies==true){
+            hospital.needSupplies=false
+          }else
+            hospital.needSupplies=true;
+  
+        hospital.save(function (err) {
+          if (err) {
+              return res.status(UNPROCESSABLE_ENTITY).json({
+                msg: err,
+              });
+            }else{
+              return res.status(OK).json({
+                msg: 'hospital edited successfully',
+                data: hospital,
+              });
+            }
+        });
+  
+    }
+    });
+    }
+  }
+else
+{
+  return res.status(404).send({
+    msg: 'No Hospital with that identifier has been found'
+    });
+}
+};
 module.exports.findHospitalByDistrict = async (req,res) =>{
   const schema = joi
   .object({
@@ -334,7 +377,6 @@ else
   }
 }
 };
-
 module.exports.findHospitalByGov = async (req,res) =>{
   const schema = joi
   .object({

@@ -19,7 +19,9 @@ router.post('/auth/login', isNotAuthenticated, errorHandler(authCtrl.login));
 router.post('/hospital/create', isAuthenticated, errorHandler(hospCtrl.createHospital));
 router.get('/hospital/getHospitals', isAuthenticated, errorHandler(hospCtrl.getHospitals));
 router.post('/hospital/loginHospital', isNotAuthenticated , errorHandler(hospCtrl.loginHospital));
-router.patch('/hospital/updateHospital/:hospitalId', isAuthenticated , errorHandler(hospCtrl.updateHospital));
+router.patch('/hospital/insertUpdates/:hospitalId', isAuthenticated , errorHandler(hospCtrl.insertUpdates));
+router.patch('/hospital/requestSupplies/:hospitalId', isAuthenticated , errorHandler(hospCtrl.requestSupplies));
+
 router.get('/hospital/findByDistrict', isAuthenticated , errorHandler(hospCtrl.findHospitalByDistrict));
 router.get('/hospital/findByGov', isAuthenticated , errorHandler(hospCtrl.findHospitalByGov));
 
