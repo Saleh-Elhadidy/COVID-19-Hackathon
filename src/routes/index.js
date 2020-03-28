@@ -24,7 +24,9 @@ router.patch('/hospital/requestSupplies/:hospitalId', isAuthenticated , errorHan
 
 router.get('/hospital/findByDistrict', isAuthenticated , errorHandler(hospCtrl.findHospitalByDistrict));
 router.get('/hospital/findByGov', isAuthenticated , errorHandler(hospCtrl.findHospitalByGov));
-
-
+router.get('/hospital/findByCity', isAuthenticated , errorHandler(hospCtrl.findHospitalByCity));
+router.get('/hospital/sortHospitals', isAuthenticated , errorHandler(hospCtrl.sortHospitals));
+router.patch('/hospital/deleteHospital/:hospitalId', isAuthenticated , errorHandler(hospCtrl.deleteHospital));
+router.get('/hospital/getUpdates', isAuthenticated , errorHandler(hospCtrl.getUpdates));
 
 module.exports = router;

@@ -56,17 +56,37 @@ const hospitalSchema = new mongoose.Schema(
         type: Number,
         required: false,
         default: 0,
+        min: 0,
     },
     freeVentilators:{
         type: Number,
         required: false,
         default: 0,
+        min: 0,
     },
     needSupplies:{
         type: Boolean,
         required: false,
         default: false,
     },
+    freeBeds:{
+        type: Number,
+        required: false,
+        default: 0,
+        min: 0,
+    },
+    totalBeds:{
+        type: Number,
+        required: true,
+        default: 0,
+        min: 0,
+    },
+    covidPatients:{
+        type: Number,
+        required: true,
+        default: 0,
+        min: 0,
+    }
 
   },
   { timestamps: true },
