@@ -43,18 +43,21 @@ app.use(
 );
 app.disable('etag');
 app.use('/api', routes);
-cron.schedule("1 1 */1 * * *", async () => { // Job that should run everyday to get daily count of patients, using 1hours interval for testing
+cron.schedule("1 */2 * * * *", async () => { // Job that should run everyday to get daily count of patients, using 1hours interval for testing
   console.log("Running CRON job")
   let totals = await findAllTotals();
   let hospitals = await findAllHospitals();
+  var nowDate = new Date(); 
+var date = nowDate.getFullYear()+'-'+(nowDate.getMonth()+1)+'-'+nowDate.getDate(); 
+  console.log(date);
   totalBeds = 0;
   totalCOVIDs = 0;
   hospitals.forEach(element => {
       totalBeds = totalBeds + element.freeBeds
       totalCOVIDs = totalCOVIDs + element.covidPatients
-      totals["hospitalsTotals"].push({hospitalName:element.hospitalName,freeBeds:element.freeBeds,covidPatients:element.covidPatients,day:new Date(new Date().toDateString())})
+      totals["hospitalsTotals"].push({hospitalName:element.hospitalName,freeBeds:element.freeBeds,covidPatients:element.covidPatients,day:date})
   });
-  totals["grandTotals"].push({freeBeds:totalBeds,covidPatients:totalCOVIDs,day:new Date(new Date().toDateString())})
+  totals["grandTotals"].push({freeBeds:totalBeds,covidPatients:totalCOVIDs,day:date})
   await totals.save();
 });
 // Logic Error Handler

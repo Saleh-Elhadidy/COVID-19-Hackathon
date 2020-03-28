@@ -5,14 +5,14 @@ const totalsSchema = new mongoose.Schema(
     grandTotals:[{
         freeBeds:Number,
         covidPatients:Number,
-        day:Date,
+        day:String,
     }],
 
     hospitalsTotals:[{
         hospitalName:String,
         freeBeds:Number,
         covidPatients:Number,
-        day:Date,
+        day:String,
     }],
 
   },
